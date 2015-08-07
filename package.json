@@ -1,0 +1,37 @@
+{
+  "name": "usbmux",
+  "version": "0.1.0",
+  "description": "iOS usbmuxd client library",
+  "main": "./lib/usbmux.js",
+  "bin": {
+    "irelay": "./bin/cli.js"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha ./test/tests.js"
+  },
+  "keywords": [
+    "usbmuxd",
+    "ios",
+    "irelay"
+  ],
+  "author": {
+    "name": "Sterling DeMille",
+    "email": "sterlingdemille+npm@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/demille/node-usbmux.git"
+  },
+  "dependencies": {
+    "debug": "^2.2.0",
+    "plist": "^1.1.0",
+    "q": "^1.4.1",
+    "yargs": "^3.15.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "rewire": "^2.3.4",
+    "should": "^7.0.2"
+  }
+}
