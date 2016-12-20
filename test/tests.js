@@ -1,9 +1,11 @@
-var net = require('net')
-  , should = require('should')
-  , rewire = require('rewire');
+var net = require('net');
+var EventEmitter = require('events').EventEmitter;
 
-var usbmux = rewire('../lib/usbmux.js')
-  , protocol = usbmux.__get__('protocol');
+var should = require('should');
+var rewire = require('rewire');
+
+var usbmux = rewire('../lib/usbmux.js');
+var protocol = usbmux.__get__('protocol');
 
 // tests connect to port 22 on attached ios device (or set env var)
 var port = process.env.TESTPORT || 22;
@@ -22,7 +24,7 @@ var tests = {
   // - protocol.connect(21, 1234)
   connect: {
     _12_22: '7AEAAAEAAAAIAAAAAQAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KICA8ZGljdD4KICAgIDxrZXk+TWVzc2FnZVR5cGU8L2tleT4KICAgIDxzdHJpbmc+Q29ubmVjdDwvc3RyaW5nPgogICAgPGtleT5DbGllbnRWZXJzaW9uU3RyaW5nPC9rZXk+CiAgICA8c3RyaW5nPm5vZGUtdXNibXV4PC9zdHJpbmc+CiAgICA8a2V5PlByb2dOYW1lPC9rZXk+CiAgICA8c3RyaW5nPm5vZGUtdXNibXV4PC9zdHJpbmc+CiAgICA8a2V5PkRldmljZUlEPC9rZXk+CiAgICA8aW50ZWdlcj4xMjwvaW50ZWdlcj4KICAgIDxrZXk+UG9ydE51bWJlcjwva2V5PgogICAgPGludGVnZXI+NTYzMjwvaW50ZWdlcj4KICA8L2RpY3Q+CjwvcGxpc3Q+',
-    _21_1234: '7QEAAAEAAAAIAAAAAQAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KICA8ZGljdD4KICAgIDxrZXk+TWVzc2FnZVR5cGU8L2tleT4KICAgIDxzdHJpbmc+Q29ubmVjdDwvc3RyaW5nPgogICAgPGtleT5DbGllbnRWZXJzaW9uU3RyaW5nPC9rZXk+CiAgICA8c3RyaW5nPm5vZGUtdXNibXV4PC9zdHJpbmc+CiAgICA8a2V5PlByb2dOYW1lPC9rZXk+CiAgICA8c3RyaW5nPm5vZGUtdXNibXV4PC9zdHJpbmc+CiAgICA8a2V5PkRldmljZUlEPC9rZXk+CiAgICA8aW50ZWdlcj4yMTwvaW50ZWdlcj4KICAgIDxrZXk+UG9ydE51bWJlcjwva2V5PgogICAgPGludGVnZXI+NTM3NjQ8L2ludGVnZXI+CiAgPC9kaWN0Pgo8L3BsaXN0Pg=='
+    _21_1234: '7QEAAAEAAAAIAAAAAQAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KICA8ZGljdD4KICAgIDxrZXk+TWVzc2FnZVR5cGU8L2tleT4KICAgIDxzdHJpbmc+Q29ubmVjdDwvc3RyaW5nPgogICAgPGtleT5DbGllbnRWZXJzaW9uU3RyaW5nPC9rZXk+CiAgICA8c3RyaW5nPm5vZGUtdXNibXV4PC9zdHJpbmc+CiAgICA8a2V5PlByb2dOYW1lPC9rZXk+CiAgICA8c3RyaW5nPm5vZGUtdXNibXV4PC9zdHJpbmc+CiAgICA8a2V5PkRldmljZUlEPC9rZXk+CiAgICA8aW50ZWdlcj4yMTwvaW50ZWdlcj4KICAgIDxrZXk+UG9ydE51bWJlcjwva2V5PgogICAgPGludGVnZXI+NTM3NjQ8L2ludGVnZXI+CiAgPC9kaWN0Pgo8L3BsaXN0Pg==',
   },
 
   // for testing the message parser
@@ -32,9 +34,9 @@ var tests = {
     confirmation: {
       msg: {
         MessageType: 'Result',
-        Number: 0
+        Number: 0,
       },
-      data: new Buffer('JgEAAAEAAAAIAAAAAQAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KPGRpY3Q+Cgk8a2V5Pk1lc3NhZ2VUeXBlPC9rZXk+Cgk8c3RyaW5nPlJlc3VsdDwvc3RyaW5nPgoJPGtleT5OdW1iZXI8L2tleT4KCTxpbnRlZ2VyPjA8L2ludGVnZXI+CjwvZGljdD4KPC9wbGlzdD4K', 'base64')
+      data: new Buffer('JgEAAAEAAAAIAAAAAQAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KPGRpY3Q+Cgk8a2V5Pk1lc3NhZ2VUeXBlPC9rZXk+Cgk8c3RyaW5nPlJlc3VsdDwvc3RyaW5nPgoJPGtleT5OdW1iZXI8L2tleT4KCTxpbnRlZ2VyPjA8L2ludGVnZXI+CjwvZGljdD4KPC9wbGlzdD4K', 'base64'),
     },
 
     // a device report message
@@ -47,12 +49,12 @@ var tests = {
           DeviceID: 7,
           LocationID: 0,
           ProductID: 4776,
-          SerialNumber: '22226dd59068c222f46522221f8222da222d394b'
-        }
+          SerialNumber: '22226dd59068c222f46522221f8222da222d394b',
+        },
       },
-      data: new Buffer('qAIAAAAAAAAAAAAAAAAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KICA8ZGljdD4KICAgIDxrZXk+RGV2aWNlSUQ8L2tleT4KICAgIDxpbnRlZ2VyPjc8L2ludGVnZXI+CiAgICA8a2V5Pk1lc3NhZ2VUeXBlPC9rZXk+CiAgICA8c3RyaW5nPkF0dGFjaGVkPC9zdHJpbmc+CiAgICA8a2V5PlByb3BlcnRpZXM8L2tleT4KICAgIDxkaWN0PgogICAgICA8a2V5PkNvbm5lY3Rpb25UeXBlPC9rZXk+CiAgICAgIDxzdHJpbmc+VVNCPC9zdHJpbmc+CiAgICAgIDxrZXk+RGV2aWNlSUQ8L2tleT4KICAgICAgPGludGVnZXI+NzwvaW50ZWdlcj4KICAgICAgPGtleT5Mb2NhdGlvbklEPC9rZXk+CiAgICAgIDxpbnRlZ2VyPjA8L2ludGVnZXI+CiAgICAgIDxrZXk+UHJvZHVjdElEPC9rZXk+CiAgICAgIDxpbnRlZ2VyPjQ3NzY8L2ludGVnZXI+CiAgICAgIDxrZXk+U2VyaWFsTnVtYmVyPC9rZXk+CiAgICAgIDxzdHJpbmc+MjIyMjZkZDU5MDY4YzIyMmY0NjUyMjIyMWY4MjIyZGEyMjJkMzk0Yjwvc3RyaW5nPgogICAgPC9kaWN0PgogIDwvZGljdD4KPC9wbGlzdD4=', 'base64')
-    }
-  }
+      data: new Buffer('qAIAAAAAAAAAAAAAAAAAADw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04Ij8+CjwhRE9DVFlQRSBwbGlzdCBQVUJMSUMgIi0vL0FwcGxlLy9EVEQgUExJU1QgMS4wLy9FTiIgImh0dHA6Ly93d3cuYXBwbGUuY29tL0RURHMvUHJvcGVydHlMaXN0LTEuMC5kdGQiPgo8cGxpc3QgdmVyc2lvbj0iMS4wIj4KICA8ZGljdD4KICAgIDxrZXk+RGV2aWNlSUQ8L2tleT4KICAgIDxpbnRlZ2VyPjc8L2ludGVnZXI+CiAgICA8a2V5Pk1lc3NhZ2VUeXBlPC9rZXk+CiAgICA8c3RyaW5nPkF0dGFjaGVkPC9zdHJpbmc+CiAgICA8a2V5PlByb3BlcnRpZXM8L2tleT4KICAgIDxkaWN0PgogICAgICA8a2V5PkNvbm5lY3Rpb25UeXBlPC9rZXk+CiAgICAgIDxzdHJpbmc+VVNCPC9zdHJpbmc+CiAgICAgIDxrZXk+RGV2aWNlSUQ8L2tleT4KICAgICAgPGludGVnZXI+NzwvaW50ZWdlcj4KICAgICAgPGtleT5Mb2NhdGlvbklEPC9rZXk+CiAgICAgIDxpbnRlZ2VyPjA8L2ludGVnZXI+CiAgICAgIDxrZXk+UHJvZHVjdElEPC9rZXk+CiAgICAgIDxpbnRlZ2VyPjQ3NzY8L2ludGVnZXI+CiAgICAgIDxrZXk+U2VyaWFsTnVtYmVyPC9rZXk+CiAgICAgIDxzdHJpbmc+MjIyMjZkZDU5MDY4YzIyMmY0NjUyMjIyMWY4MjIyZGEyMjJkMzk0Yjwvc3RyaW5nPgogICAgPC9kaWN0PgogIDwvZGljdD4KPC9wbGlzdD4=', 'base64'),
+    },
+  },
 };
 
 //
@@ -81,6 +83,7 @@ describe('protocol', function() {
       protocol.connect(12, 22).toString('base64').should.be
         .eql(tests.connect._12_22);
     });
+
     it('connect(21, 1234)', function() {
       protocol.connect(21, 1234).toString('base64').should.be
         .eql(tests.connect._21_1234);
@@ -106,8 +109,8 @@ describe('protocol', function() {
      * @param {Function} done
      */
     function one_data_to_one_msg(messageType, done) {
-      var test = tests.makeParser[messageType].data
-        , expected = tests.makeParser[messageType].msg;
+      var test = tests.makeParser[messageType].data;
+      var expected = tests.makeParser[messageType].msg;
 
       var build = protocol.makeParser(function(msg) {
         msg.should.eql(expected);
@@ -139,17 +142,17 @@ describe('protocol', function() {
      * @param {Function} done
      */
     function more_datas_to_one_msg(messageType, numSegments, done) {
-      var test = tests.makeParser[messageType].data
-        , expected = tests.makeParser[messageType].msg;
+      var test = tests.makeParser[messageType].data;
+      var expected = tests.makeParser[messageType].msg;
 
-      var build = protocol.makeParser(function(msg) {
+      var build = protocol.makeParser(function onBuildComplete(msg) {
         msg.should.eql(expected);
         done();
       });
 
       for (var i = 0; i < numSegments; i++) {
-        var previous = (test.length / numSegments) * i
-          , next = (test.length / numSegments) * (i + 1);
+        var previous = Math.floor((test.length / numSegments) * i);
+        var next = Math.floor((test.length / numSegments) * (i + 1));
 
         build(test.slice(previous, next));
       }
@@ -178,8 +181,8 @@ describe('protocol', function() {
      * @param {Function} done
      */
     function callAfter(n, cb) {
-      var count = 0
-        , acc = [];
+      var count = 0;
+      var acc = [];
 
       return function(item) {
         count++;
@@ -251,8 +254,8 @@ describe('createListener()', function() {
 
 describe('connect()', function() {
   it('resolves a tunneled connection (id from above)', function(done) {
-    var udid = Object.keys(usbmux.devices)[0]
-      , deviceID = usbmux.devices[udid].DeviceID;
+    var udid = Object.keys(usbmux.devices)[0];
+    var deviceID = usbmux.devices[udid].DeviceID;
 
     usbmux.__get__('connect')(deviceID, port)
       .then(function(tunnel) {
@@ -299,7 +302,7 @@ describe('Relay()', function() {
       .on('warning', done)
       .on('ready', function() {
         relay._server.should.instanceof(net.Server);
-        relay._listener.should.instanceof(net.Socket);
+        relay._listener.should.instanceof(EventEmitter);
         done();
       });
   });

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-var usbmux;
+var version = require('../package').version;
+var usbmux; // delay require until after parsing verbose option
 
 var argv = require('yargs')
   .usage('Usage: irelay <port:port> [options]')
@@ -16,7 +17,7 @@ var argv = require('yargs')
     count: 'verbose'
   })
   .version(function() {
-    return require('../package').version;
+    return version;
   })
   .help('h')
     .alias('h', 'help')
@@ -27,18 +28,21 @@ var argv = require('yargs')
 
 /**
  * Shows debugging info only for verbosity = 1
- * @param {*...} arguments
+ * @param {...*} arguments
  */
 function info() {
   if (argv.verbose !== 1) return;
+
   var args = Array.prototype.slice.call(arguments);
+
   if (!args[args.length-1]) args.pop(); // if last arg is undefined, remove it
+
   console.log.apply(console, args);
 }
 
 /**
  * Panic!
- * @param {*...} arguments
+ * @param {...*} arguments
  */
 function panic() {
   console.error('');
@@ -49,7 +53,7 @@ function panic() {
 
 /**
  * Error handler for listener and relay
- * @param  {Error} err
+ * @param {Error} err
  */
 function onErr(err) {
   // local port is in use
@@ -88,13 +92,14 @@ function listenForDevices() {
 function parsePorts(arg) {
   // coerce and split
   var ports = ('' + arg).split(':');
+
   if (ports.length !== 2) {
     panic('Error parsing ports.');
   }
 
   // parse ints
-  var devicePort = Number((ports[0] === '') ? NaN : ports[0])
-    , relayPort = Number((ports[1] === '') ? NaN : ports[1]);
+  var devicePort = Number((ports[0] === '') ? NaN : ports[0]);
+  var relayPort = Number((ports[1] === '') ? NaN : ports[1]);
 
   // NaN check em
   if (devicePort !== devicePort || relayPort !== relayPort) {
@@ -106,24 +111,24 @@ function parsePorts(arg) {
 
 /**
  * Start a new relay from a pair of given ports
- * @param  {integer[]} portPair - [devicePort, relayPort]
+ * @param {integer[]} portPair - [devicePort, relayPort]
  */
 function startRelay(portPair) {
-  var devicePort = portPair[0]
-    , relayPort = portPair[1];
+  var devicePort = portPair[0];
+  var relayPort = portPair[1];
 
   console.log('Starting relay from local port: %s -> device port: %s',
     relayPort, devicePort);
 
   new usbmux.Relay(devicePort, relayPort, {udid: argv.udid})
     .on('error', onErr)
-    .on('warning', console.log.bind(console, 'Warning: device not found...'))
-    .on('ready',      info.bind(this, 'Device ready: '))
-    .on('attached',   info.bind(this, 'Device attached: '))
-    .on('detached',   info.bind(this, 'Device detached: '))
-    .on('connect',    info.bind(this, 'New connection to relay started.'))
-    .on('disconnect', info.bind(this, 'Connection to relay closed.'))
-    .on('close',      info.bind(this, 'Relay has closed.'));
+    .on('warning', function(err) { console.log(err.message); })
+    .on('ready',      info.bind(null, 'Device ready: '))
+    .on('attached',   info.bind(null, 'Device attached: '))
+    .on('detached',   info.bind(null, 'Device detached: '))
+    .on('connect',    info.bind(null, 'New connection to relay started.'))
+    .on('disconnect', info.bind(null, 'Connection to relay closed.'))
+    .on('close',      info.bind(null, 'Relay has closed.'));
 }
 
 // Set debugging env vars if extra verbose (needs to be set before requiring)

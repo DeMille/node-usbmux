@@ -5,12 +5,12 @@ Node-usbmux is an iOS usbmuxd client library inspired by [tcprelay.py](https://g
 
 ## What is usbmuxd?
 
-All USB communication with iOS devices (including communication from iTunes) is handled by the usbmux daemon. When a device is plugged in, usbmuxd connects to it and acts as a middleman for communicating with the device, multiplexing TCP like connections to sockets on the device. (USB multiplexer = usbmux)
+All USB communication with iOS devices (including communication from iTunes) is handled through the usbmux daemon. When a device is plugged in, usbmuxd connects to it and acts as a middleman for communicating with the device, multiplexing TCP like connections to sockets on the device. (usbmuxd = USB multiplexer daemon)
 
 
 ## What does node-usbmux do?
 
-Node-usbmux provides tcp connections to sockets on iOS devices via USB.
+Node-usbmux lets you connect to any listening localhost socket on an iOS device via USB.
 
 Installed globally, node-usbmux's CLI lets you create TCP relays that tunnel traffic from localhost through USB to the device. (useful for accessing ssh or veency over usb)
 
@@ -31,7 +31,7 @@ Prerequisites: iTunes or [libimobiledevice](http://www.libimobiledevice.org/)
 Node-usbmux adds the `irelay` command:
 
 ```sh
-# Relay localhost:2222 to port 22 on device through USB
+# Relay localhost:2222 to port 22 on a device through USB
 # (so you can ssh root@localhost -p 2222)
 irelay 22:2222
 
@@ -41,12 +41,14 @@ irelay 22:2222 1234:1234 -vv
 # Specify a device with -u, --udid option
 irelay 22:2222 1234:1234 --udid=12345abcde12345abcde12345abcde12345abcde
 
-# Show UDIDs of attached devices
+# Show UDIDs of devices as they are attached/detached
 irelay listen
 
 # More info
 irelay --help
 ```
+
+Note: `irelay` will try to connect to the first device it finds unless a udid is given as an option. Multiple `irelay` commands (and UDIDs) are needed for simultaneously managing multiple connected devices.
 
 
 ## Module Usage
@@ -62,7 +64,9 @@ var usbmux = require('usbmux');
 ```
 
 ### new usbmux.Relay(devicePort, relayPort[, options])
-Create a tcp relay that pipes a local port to an attached iOS device port.
+Create a tcp relay that pipes a local port to an attached device port.
+
+If a device UDID is not given in the options `usbmux.Relay` will try to connect to the first device it finds. (use `createListener` to find UDIDs of connected devices)
 
 - devicePort {integer} - Destination port on device
 - relayPort {integer} - Local port to start tcp server on
@@ -79,7 +83,7 @@ var relay = new usbmux.Relay(22, 2222)
   })
   ...
 
-// you can stop the relay when done
+// stop the relay when done
 relay.stop();
 ```
 
@@ -114,18 +118,18 @@ Fires when the relay's TCP server is closes (the net.Server event)
 
 ### usbmux.createListener()
 Connects to usbmuxd and listens for iOS devices <br/>
-Returns a normal net.Socket connection with two added events:
+Returns a listener, a plain event emitter with a .stop() method.
 
 ```javascript
 // Ex:
-var listener = new usbmux.createListener()
+var listener = usbmux.createListener()
   .on('error', function(err) {})
   .on('attached', function(udid) {})
   .on('detached', function(udid) {});
 
-// listener is just a net.Socket connection to usbmuxd
-assert(listener instanceof net.Socket);
-listener.end();
+...
+
+listener.stop(); // or listener.end();
 ```
 
 ##### EVENTS:
@@ -136,10 +140,15 @@ Fires when a USB device is attached (or first detected)
 **detached** - _UDID {string}_ <br/>
 Fires when a USB device is detached
 
+**error** - _err {Error}_ <br/>
+Fires when the socket connection emits an error
+
 
 ### usbmux.getTunnel(devicePort[, options])
-Get a tunneled connection to port on device within a timeout period <br/>
-Returns a promise that resolves a net.Socket connection to the requested port
+Get a tunneled connection to port on a device within a timeout period.<br/>
+Resolves a net.Socket connection to the requested port.
+
+If no device UDID is specified in the options, `getTunnel` will try to connect to the first device it can find.
 
 - devicePort {integer} - Destination port on device
 - options {object}
@@ -156,7 +165,7 @@ usbmux.getTunnel(1234)
     tunnel.write('hello');
   })
   .catch(function(err) {
-    console.err(err);
+    console.log(err);
     // "Tunnel failed, Err #3: Port isn't available or open"
   });
 ```

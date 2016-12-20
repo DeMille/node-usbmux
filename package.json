@@ -1,7 +1,7 @@
 {
   "name": "usbmux",
-  "version": "0.1.0",
-  "description": "iOS usbmuxd client library",
+  "version": "0.2.0",
+  "description": "An iOS usbmuxd client library / tcp relay",
   "main": "./lib/usbmux.js",
   "bin": {
     "irelay": "./bin/cli.js"
@@ -24,6 +24,7 @@
     "url": "https://github.com/demille/node-usbmux.git"
   },
   "dependencies": {
+    "chokidar": "^1.6.1",
     "debug": "^2.2.0",
     "plist": "^1.1.0",
     "q": "^1.4.1",
