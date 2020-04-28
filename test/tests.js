@@ -241,9 +241,10 @@ describe('protocol', function() {
 
 describe('createListener()', function() {
   it('fires attached event when a device is plugged in', function(done) {
-    usbmux.createListener()
+    const listener = usbmux.createListener()
       .on('error', done)
       .on('attached', function() {
+        listener.end();
         done();
       });
   });
@@ -251,30 +252,38 @@ describe('createListener()', function() {
 
 describe('connect()', function() {
   it('resolves a tunneled connection (id from above)', function(done) {
-    var udid = Object.keys(usbmux.devices)[0]
-      , deviceID = usbmux.devices[udid].DeviceID;
-
-    usbmux.__get__('connect')(deviceID, port)
-      .then(function(tunnel) {
-        tunnel.should.be.instanceof(net.Socket);
-        done();
-      })
-      .catch(done);
+    const listener = usbmux.createListener()
+      .on('error', done)
+      .once('attached', function(udid) {
+        const deviceID = usbmux.devices[udid].DeviceID;
+        usbmux.__get__('connect')(deviceID, port)
+          .then(function(tunnel) {
+            tunnel.should.be.instanceof(net.Socket);
+            tunnel.end();
+            listener.end();
+            done();
+          })
+          .catch(done);
+      });
   });
 });
 
 describe('getTunnel()', function() {
   describe('resolves a tunneled connection', function() {
 
-    it('with the udid option (udid from above)', function(done) {
-      var udid = Object.keys(usbmux.devices)[0];
-
-      usbmux.getTunnel(port, {udid: udid})
-        .then(function(tunnel) {
-          tunnel.should.be.instanceof(net.Socket);
-          done();
-        })
-        .catch(done);
+    it('with the udid option', function(done) {
+      const listener = usbmux.createListener()
+        .on('error', done)
+        .once('attached', function(udid) {
+          usbmux.getTunnel(port, {udid: udid})
+            .then(function(tunnel) {
+              tunnel.should.be.instanceof(net.Socket);
+              tunnel.end();
+              listener.end();
+              done();
+            })
+            .catch(done);
+        });
     });
 
     it('and without udid option', function(done) {
@@ -284,6 +293,7 @@ describe('getTunnel()', function() {
       usbmux.getTunnel(port)
         .then(function(tunnel) {
           tunnel.should.be.instanceof(net.Socket);
+          tunnel.end();
           done();
         })
         .catch(done);
@@ -300,6 +310,7 @@ describe('Relay()', function() {
       .on('ready', function() {
         relay._server.should.instanceof(net.Server);
         relay._listener.should.instanceof(net.Socket);
+        relay.stop();
         done();
       });
   });
